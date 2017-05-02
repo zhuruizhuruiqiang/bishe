@@ -95,9 +95,9 @@ def mean_pool_2x2(x):
                         strides=[1, 2, 2, 1], padding='SAME')
 
 def variable_weight_loss(shape,stddev,w1):
-    var=tf.variable(tf.truncated_normal(shape,stddev=stddev))
+    var=tf.Variable(tf.truncated_normal(shape,stddev=stddev))
     if w1 is not None:
-        weight_loss=tf.multiple(tf.nn.l2_loss(var),w1,name="weight_loss")
+        weight_loss=tf.multiply(tf.nn.l2_loss(var),w1,name="weight_loss")
         tf.add_to_collection("losses",weight_loss)
     return var
 
@@ -105,7 +105,7 @@ def evaluate_pictures(n_epochs=2000,batch_size=10,dataset='E:/bishe/cifar-100-py
     def loss(logits, labels):
         labels = tf.cast(labels, tf.int64)
         cross_entropy = tf.reduce_mean(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits), name='cross_entropy')
+            tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits), name='cross_entropy')
         tf.add_to_collection('losses', cross_entropy)
         return tf.add_n(tf.get_collection('losses'), name='total_loss')
 
@@ -144,8 +144,7 @@ def evaluate_pictures(n_epochs=2000,batch_size=10,dataset='E:/bishe/cifar-100-py
     b_fc1 = bias_variable([500])
     y_fc1 = tf.nn.relu(tf.matmul(tf.reshape(h_fc1_drop, [-1, 4 * 4 * 1024]), W_fc1) + b_fc1)
 
-    input4 = tf.nn.local_response_normalization(y_fc1)
-    h_fc2_drop = tf.nn.dropout(input4, keep_prob)
+    h_fc2_drop = tf.nn.dropout(y_fc1, keep_prob)
     W_fc2 =  variable_weight_loss(shape=[500,100],stddev=0.04,w1=0.004)
     b_fc2 = bias_variable([100])
     y_conv = tf.matmul(h_fc2_drop, W_fc2) + b_fc2
